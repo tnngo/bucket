@@ -1,5 +1,9 @@
 package queue
 
+import (
+	"sync"
+)
+
 // element 元素
 type element struct {
 	next  *element
@@ -8,27 +12,23 @@ type element struct {
 
 // queue 为令牌桶算法专有队列, 因此设计为有界队列
 type queue struct {
-	length, currentLen int
-
-	// 入队游标
-	enqCursor int
-
-	// 出队游标
-	deqCursor int
+	length, total int
 
 	e *element
+
+	mutex *sync.Mutex
 }
 
 // New 初始化队列
-func New(length int) *queue {
-	if length < 1 {
+// total 总数
+func New(total int) *queue {
+	if total < 1 {
 		panic("有界队列的长度不可以小于1")
 	}
 	return &queue{
-		length:     length,
-		currentLen: 0,
-		enqCursor:  0,
-		deqCursor:  0,
+		total:  total,
+		length: 0,
+		mutex:  &sync.Mutex{},
 	}
 }
 
@@ -45,21 +45,27 @@ func (e *element) addElement(v interface{}) {
 	}
 }
 
+// Put 入队, 阻塞式操作
 func (q *queue) Put(v interface{}) {
 	if q.Len() == 0 {
 		q.e = &element{
 			next:  nil,
 			value: v,
 		}
-		q.currentLen = 1
+		q.length = 1
 		return
 	}
 	q.e.addElement(v)
-	q.enqCursor++
-	q.currentLen++
+	q.length++
+}
+
+func (q *queue) take() interface{} {
+	q.e = q.e.next
+	q.length--
+	return nil
 }
 
 // Len 返回队列的长度
 func (q *queue) Len() int {
-	return q.currentLen
+	return q.length
 }
