@@ -2,6 +2,7 @@ package queue
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 // element 元素
@@ -12,7 +13,7 @@ type element struct {
 
 // queue 为令牌桶算法专有队列, 因此设计为有界队列
 type queue struct {
-	length, total int
+	length, total int32
 
 	e *element
 
@@ -21,7 +22,7 @@ type queue struct {
 
 // New 初始化队列
 // total 总数
-func New(total int) *queue {
+func New(total int32) *queue {
 	if total < 1 {
 		panic("有界队列的长度不可以小于1")
 	}
@@ -56,16 +57,19 @@ func (q *queue) Put(v interface{}) {
 		return
 	}
 	q.e.addElement(v)
-	q.length++
+	newLen := atomic.AddInt32(&q.length, 1)
+	q.length = newLen
 }
 
-func (q *queue) take() interface{} {
+func (q *queue) Take() interface{} {
+	result := q.e.value
 	q.e = q.e.next
-	q.length--
-	return nil
+	newLen := atomic.AddInt32(&q.length, -1)
+	q.length = newLen
+	return result
 }
 
 // Len 返回队列的长度
-func (q *queue) Len() int {
+func (q *queue) Len() int32 {
 	return q.length
 }
