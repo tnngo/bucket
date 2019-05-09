@@ -47,6 +47,14 @@ func (e *element) add(v interface{}) {
 	}
 }
 
+// remove 删除队头, 并返回next指针地址
+func (e *element) remove() (*element, interface{}) {
+	next := e.next
+	v := e.value
+	e = nil
+	return next, v
+}
+
 // Put 入队, 阻塞式操作
 func (q *queue) Put(v interface{}) {
 	if q.Len() == 0 {
@@ -65,8 +73,8 @@ func (q *queue) Put(v interface{}) {
 
 // Take 出队, 阻塞式操作
 func (q *queue) Take() interface{} {
-	v := q.e.value
-	q.e = q.e.next
+	var v interface{}
+	q.e, v = q.e.remove()
 	// TODO 考虑在mutex.Lock内进行+1
 	newLen := atomic.AddInt32(&q.length, -1)
 	q.length = newLen
