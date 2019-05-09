@@ -7,7 +7,8 @@ import (
 
 // element 元素
 type element struct {
-	next  *element
+	next *element
+
 	value interface{}
 }
 
@@ -34,7 +35,7 @@ func New(total int32) *queue {
 }
 
 // addElement 添加元素
-func (e *element) addElement(v interface{}) {
+func (e *element) add(v interface{}) {
 	for ; e != nil; e = e.next {
 		if e.next == nil {
 			e.next = &element{
@@ -56,17 +57,20 @@ func (q *queue) Put(v interface{}) {
 		q.length = 1
 		return
 	}
-	q.e.addElement(v)
+	q.e.add(v)
+	// TODO 考虑在mutex.Lock内进行+1
 	newLen := atomic.AddInt32(&q.length, 1)
 	q.length = newLen
 }
 
+// Take 出队, 阻塞式操作
 func (q *queue) Take() interface{} {
-	result := q.e.value
+	v := q.e.value
 	q.e = q.e.next
+	// TODO 考虑在mutex.Lock内进行+1
 	newLen := atomic.AddInt32(&q.length, -1)
 	q.length = newLen
-	return result
+	return v
 }
 
 // Len 返回队列的长度
