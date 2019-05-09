@@ -12,6 +12,26 @@ type element struct {
 	value interface{}
 }
 
+// addElement 添加元素
+func (e *element) add(v interface{}) {
+	for ; e != nil; e = e.next {
+		if e.next == nil {
+			e.next = &element{
+				next:  nil,
+				value: v,
+			}
+			break
+		}
+	}
+}
+
+// remove 删除队头, 并返回next指针地址
+func (e *element) remove() (*element, interface{}) {
+	next, v := e.next, e.value
+	e = nil
+	return next, v
+}
+
 // queue 为令牌桶算法专有队列, 因此设计为有界队列
 type queue struct {
 	length, total int32
@@ -32,27 +52,6 @@ func New(total int32) *queue {
 		length: 0,
 		mutex:  &sync.Mutex{},
 	}
-}
-
-// addElement 添加元素
-func (e *element) add(v interface{}) {
-	for ; e != nil; e = e.next {
-		if e.next == nil {
-			e.next = &element{
-				next:  nil,
-				value: v,
-			}
-			break
-		}
-	}
-}
-
-// remove 删除队头, 并返回next指针地址
-func (e *element) remove() (*element, interface{}) {
-	next := e.next
-	v := e.value
-	e = nil
-	return next, v
 }
 
 // Put 入队, 阻塞式操作
