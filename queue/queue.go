@@ -26,11 +26,6 @@ func (e *element) add(v interface{}) {
 
 // remove 删除队头, 并返回next指针地址
 func (e *element) remove() (*element, interface{}) {
-	// 本不该对e == nil进行判断, 但神奇的Testing会偶尔破坏互斥性
-	// 因此为了安全起见对e == nil 进行判断
-	if e == nil {
-		return nil, nil
-	}
 	next, v := e.next, e.value
 	e = nil
 	return next, v
