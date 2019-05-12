@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -26,6 +27,9 @@ func (e *element) add(v interface{}) {
 
 // remove 删除队头, 并返回next指针地址
 func (e *element) remove() (*element, interface{}) {
+	if e == nil {
+		fmt.Println(e == nil)
+	}
 	next, v := e.next, e.value
 	e = nil
 	return next, v
@@ -37,8 +41,7 @@ type Queue struct {
 
 	e *element
 
-	mutexPut  sync.Mutex
-	mutexTake sync.Mutex
+	mutex sync.Mutex
 
 	notifyPut  *sync.Cond
 	notifyTake *sync.Cond
@@ -54,13 +57,19 @@ func New(total int32) *Queue {
 		total:  total,
 		length: 0,
 	}
-	q.notifyPut = sync.NewCond(&q.mutexPut)
-	q.notifyTake = sync.NewCond(&q.mutexTake)
+
+	q.notifyPut = sync.NewCond(&q.mutex)
+	q.notifyTake = sync.NewCond(&q.mutex)
 	return q
 }
 
-// Put 入队, 阻塞式操作
+// Put 入队, 如果队列满,则进行阻塞
 func (q *Queue) Put(v interface{}) {
+	if v == nil {
+		panic("不能Put空值")
+	}
+	defer q.mutex.Unlock()
+	q.mutex.Lock()
 	if q.Len() == 0 {
 		q.e = &element{
 			next:  nil,
@@ -70,27 +79,26 @@ func (q *Queue) Put(v interface{}) {
 		return
 	}
 
-	q.mutexPut.Lock()
-	defer q.mutexPut.Unlock()
+	q.e.add(v)
+	q.length += 1
 	for q.length == q.total {
 		q.notifyPut.Wait()
 	}
 
-	q.e.add(v)
-	q.length++
 	q.notifyTake.Signal()
 }
 
-// Take 出队, 阻塞式操作
+// Take 出队, 如果队列为空, 则进行阻塞
+// 内存不够时, 互斥会失败
 func (q *Queue) Take() interface{} {
-	q.mutexTake.Lock()
-	defer q.mutexTake.Unlock()
-	if q.length == 0 {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+	for q.length == 0 {
 		q.notifyTake.Wait()
 	}
 	var v interface{}
 	q.e, v = q.e.remove()
-	q.length--
+	q.length -= 1
 	q.notifyPut.Signal()
 	return v
 }

@@ -41,21 +41,18 @@ func Test_queue_Take(t *testing.T) {
 func Test_queue_Take_for_blocking(t *testing.T) {
 	q := New(6)
 	go func() {
-		t.Run("Put", func(t *testing.T) {
+		t.Run("Put阻塞", func(t *testing.T) {
+			i := 0
 			for {
-				q.Put(1)
-				q.Put(2)
-				q.Put(3)
-				q.Put(4)
-				q.Put(5)
-				q.Put(6)
-				time.Sleep(time.Second * 1)
+				i++
+				q.Put(i)
+				time.Sleep(time.Microsecond * 2)
 			}
 		})
 	}()
 
 	go func() {
-		t.Run("Take", func(t *testing.T) {
+		t.Run("Take阻塞", func(t *testing.T) {
 			for {
 				fmt.Println(q.Take())
 			}
