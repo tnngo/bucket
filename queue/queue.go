@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -27,9 +26,6 @@ func (e *element) add(v interface{}) {
 
 // remove 删除队头, 并返回next指针地址
 func (e *element) remove() (*element, interface{}) {
-	if e == nil {
-		fmt.Println(e == nil)
-	}
 	next, v := e.next, e.value
 	e = nil
 	return next, v
