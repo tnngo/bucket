@@ -31,9 +31,11 @@ func (e *element) remove() (*element, interface{}) {
 	return next, v
 }
 
-// queue 为令牌桶算法专有队列, 因此设计为有界队列
+// queue 为令牌桶算法专有队列
 type Queue struct {
-	length, total int32
+	// total 如果tatal等于0, 则为无界队列
+	total  int
+	length int
 
 	e *element
 
@@ -45,12 +47,8 @@ type Queue struct {
 
 // New 初始化队列
 // total 总数
-func New(total int32) *Queue {
-	if total < 1 {
-		panic("有界队列的长度不可以小于1")
-	}
+func New() *Queue {
 	q := &Queue{
-		total:  total,
 		length: 0,
 	}
 
@@ -100,6 +98,6 @@ func (q *Queue) Take() interface{} {
 }
 
 // Len 返回队列的长度
-func (q *Queue) Len() int32 {
+func (q *Queue) Len() int {
 	return q.length
 }

@@ -6,15 +6,9 @@ import (
 	"time"
 )
 
-var q *Queue
-
-func init() {
-	q = New(2)
-}
-
 func Test_queue_Put(t *testing.T) {
 	t.Run("Put3个数据并打印", func(t *testing.T) {
-		q := New(2)
+		q := New()
 		q.Put(111)
 		q.Put(222)
 		q.Put(333)
@@ -27,7 +21,7 @@ func Test_queue_Put(t *testing.T) {
 
 func Test_queue_Take(t *testing.T) {
 	t.Run("Take3个数据并打印", func(t *testing.T) {
-		q := New(3)
+		q := New()
 		q.Put(111)
 		q.Put(222)
 		q.Put(333)
@@ -39,7 +33,7 @@ func Test_queue_Take(t *testing.T) {
 
 // Test_queue_Take_for_blocking 测试阻塞操作
 func Test_queue_Take_for_blocking(t *testing.T) {
-	q := New(6)
+	q := New()
 	go func() {
 		t.Run("Put阻塞", func(t *testing.T) {
 			i := 0
