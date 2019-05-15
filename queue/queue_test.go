@@ -45,8 +45,8 @@ func Test_queue_Take_for_blocking(t *testing.T) {
 			i := 0
 			for {
 				i++
-				q.Put(i)
-				time.Sleep(time.Microsecond * 2)
+				go q.Put(i)
+				time.Sleep(time.Microsecond * 1)
 			}
 		})
 	}()
@@ -54,7 +54,7 @@ func Test_queue_Take_for_blocking(t *testing.T) {
 	go func() {
 		t.Run("Take阻塞", func(t *testing.T) {
 			for {
-				fmt.Println(q.Take())
+				go fmt.Println(q.Take())
 			}
 		})
 	}()
