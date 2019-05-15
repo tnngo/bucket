@@ -1,7 +1,5 @@
 package bucket
 
-import "time"
-
 type token int
 
 const (
@@ -12,47 +10,33 @@ const (
 )
 
 type Bucket struct {
-	// count 生产令牌的个数
 	count int
-
-	// timer 多少时间内生产令牌
-	timer time.Duration
-
-	t token
-
-	// startCode start标记
-	// 一旦Bucket.Start(), SetTimer和SetToken不允许再次调用
-	startCode int
 }
 
-// New 创建Bucket指针对象, 默认每1秒产生count个数字令牌
+// New 创建Bucket指针对象,
+// 默认每1秒产生count个数字令牌
 func New(count int) *Bucket {
+	if count < 1 {
+		panic("每秒生产的令牌数不能小于1")
+	}
 	return &Bucket{
 		count: count,
-		timer: time.Second * 1,
 	}
 }
 
-// SetTimer 设置多少时间内产生令牌
-func (b *Bucket) SetTimer(timer time.Duration) *Bucket {
-	if b.startCode == 1 {
-		panic("Start后不允许调用SetTimer")
-	}
-	b.timer = timer
-	return b
+type Options struct {
+	// Count 生产令牌的个数
+	Count int
+
+	// Token 令牌类型
+	Token token
+
+	// MaxTokenCount 最大令牌数
+	MaxTokenCount int
 }
 
-func (b *Bucket) SetToken(t token) *Bucket {
-	if b.startCode == 1 {
-		panic("Start后不允许调用SetToken")
-	}
-	b.t = t
-	return b
-}
+func Custom(options *Options) *Bucket {
 
-// Start 开始放入令牌
-func (b *Bucket) Start() {
-	b.startCode = 1
 }
 
 // Acquire 获得令牌
