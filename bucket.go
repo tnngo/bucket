@@ -35,7 +35,7 @@ func New(count int) *Bucket {
 
 // SetTimer 设置多少时间内产生令牌
 func (b *Bucket) SetTimer(timer time.Duration) *Bucket {
-	if b.startCode == 0 {
+	if b.startCode == 1 {
 		panic("Start后不允许调用SetTimer")
 	}
 	b.timer = timer
@@ -43,7 +43,7 @@ func (b *Bucket) SetTimer(timer time.Duration) *Bucket {
 }
 
 func (b *Bucket) SetToken(t token) *Bucket {
-	if b.startCode == 0 {
+	if b.startCode == 1 {
 		panic("Start后不允许调用SetToken")
 	}
 	b.t = t
