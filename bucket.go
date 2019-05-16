@@ -13,6 +13,8 @@ type Bucket struct {
 	q *queue.Queue
 
 	duration time.Duration
+
+	baseTicker *time.Ticker
 }
 
 func (b *Bucket) setDuration() *Bucket {
@@ -22,12 +24,12 @@ func (b *Bucket) setDuration() *Bucket {
 		return b
 	case b.count > 1 && b.count <= 1000:
 		t := (1.0 / float64(b.count)) * 1000.0
-		v := int(math.Floor(t + 0.5))
+		v := time.Duration(math.Floor(t + 0.5))
 		b.duration = v * time.Millisecond
 		return b
 	case b.count > 1000 && b.count <= 1000000:
 		t := (1.0 / float64(b.count)) * 1000.0 * 1000.0
-		v := int(math.Floor(t + 0.5))
+		v := time.Duration(math.Floor(t + 0.5))
 		b.duration = v * time.Microsecond
 		return b
 	default:
@@ -37,7 +39,7 @@ func (b *Bucket) setDuration() *Bucket {
 
 // New 创建Bucket指针对象
 // count 最大极限值1000000, 即1微秒1个.
-// 事实上由于硬件或一些开销, 比如锁等,
+// 事实上由于硬件或其他一些开销, 比如锁等,
 // 并不一定会在1微秒内生成1个, 可能会出现几十或几百毫秒生成1个
 func New(count int) *Bucket {
 	switch {
@@ -63,8 +65,23 @@ func (b *Bucket) Start() {
 	}
 }
 
-// Acquire 获得令牌
-func (b *Bucket) Acquire() bool {
+/**
+ ** 用于限制整个系统流量, 可以用于入口处,
+ ** 无论是合法请求还是非法请求,
+ ** 只要是在1秒内有count/2个令牌被拿走, 则后续其他请求都将进行惩罚.
+**/
+// BaseAcquire 获得令牌的基本方法
+func (b *Bucket) BaseAcquire(ip string) bool {
+	if b.baseTicker == nil {
+		b.baseTicker = time.NewTicker(1 * time.Second)
+		go func() {
+			select {
+			case <-b.baseTicker.C:
+				print(b.q.Len())
+			default:
+			}
+		}()
+	}
 	b.q.Take()
-	return false
+	return true
 }
