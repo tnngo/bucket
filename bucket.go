@@ -38,6 +38,16 @@ func (b *Bucket) setDuration() *Bucket {
 	}
 }
 
+// start
+func (b *Bucket) start() {
+	n := 0
+	for {
+		n++
+		b.q.Put(n)
+		time.Sleep(b.duration)
+	}
+}
+
 // New 创建Bucket指针对象
 // count 最大极限值1000000, 即1微秒1个.
 // 事实上由于硬件或其他一些开销, 比如锁等,
@@ -58,23 +68,19 @@ func New(count int) *Bucket {
 	}
 }
 
-// start
-func (b *Bucket) start() {
-	n := 0
-	for {
-		n++
-		b.q.Put(n)
-		time.Sleep(b.duration)
-	}
+func (b *Bucket) Acquire() {
+	b.q.Take()
 }
 
 /**
  ** 用于限制整个系统流量, 可以用于入口处,
  ** 无论是合法请求还是非法请求,
- ** 只要是在1秒内有count/2个令牌被拿走, 则后续其他请求都将进行惩罚.
+ ** 只要1个IP在1秒内拿走count/2个令牌,
+ ** 则后续其他请求都将进行惩罚用来平衡系统开销,
+ ** 直到屏蔽该IP后对其他IP进行速率回复
 **/
-// BaseAcquire 获得令牌的基本方法
-func (b *Bucket) BaseAcquire(ip string) bool {
+// EntryAcquire 入口获得令牌
+func (b *Bucket) EntryAcquire(ip string) {
 	if b.baseTicker == nil {
 		b.baseTicker = time.NewTicker(1 * time.Second)
 		go func() {
@@ -88,5 +94,4 @@ func (b *Bucket) BaseAcquire(ip string) bool {
 		}()
 	}
 	fmt.Println(b.q.Take())
-	return true
 }
