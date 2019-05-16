@@ -1,6 +1,7 @@
 package bucket
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -48,15 +49,17 @@ func New(count int) *Bucket {
 	case count > 1000000:
 		panic("1秒内生成的令牌数不能大于1000000")
 	default:
-		return (&Bucket{
+		b := (&Bucket{
 			count: count,
 			q:     queue.New(),
 		}).setDuration()
+		go b.start()
+		return b
 	}
 }
 
-// Start
-func (b *Bucket) Start() {
+// start
+func (b *Bucket) start() {
 	n := 0
 	for {
 		n++
@@ -75,13 +78,15 @@ func (b *Bucket) BaseAcquire(ip string) bool {
 	if b.baseTicker == nil {
 		b.baseTicker = time.NewTicker(1 * time.Second)
 		go func() {
-			select {
-			case <-b.baseTicker.C:
-				print(b.q.Len())
-			default:
+			for {
+				select {
+				case <-b.baseTicker.C:
+					fmt.Println(123)
+				}
+
 			}
 		}()
 	}
-	b.q.Take()
+	fmt.Println(b.q.Take())
 	return true
 }
