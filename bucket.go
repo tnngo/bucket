@@ -1,7 +1,6 @@
 package bucket
 
 import (
-	"fmt"
 	"math"
 	"time"
 
@@ -14,8 +13,6 @@ type Bucket struct {
 	q *queue.Queue
 
 	duration time.Duration
-
-	baseTicker *time.Ticker
 }
 
 func (b *Bucket) setDuration() *Bucket {
@@ -68,30 +65,7 @@ func New(count int) *Bucket {
 	}
 }
 
+// Acquire 获取一个令牌
 func (b *Bucket) Acquire() {
 	b.q.Take()
-}
-
-/**
- ** 用于限制整个系统流量, 可以用于入口处,
- ** 无论是合法请求还是非法请求,
- ** 只要1个IP在1秒内拿走count/2个令牌,
- ** 则后续其他请求都将进行惩罚用来平衡系统开销,
- ** 直到屏蔽该IP后对其他IP进行速率回复
-**/
-// EntryAcquire 入口获得令牌
-func (b *Bucket) EntryAcquire(ip string) {
-	if b.baseTicker == nil {
-		b.baseTicker = time.NewTicker(1 * time.Second)
-		go func() {
-			for {
-				select {
-				case <-b.baseTicker.C:
-					fmt.Println(123)
-				}
-
-			}
-		}()
-	}
-	fmt.Println(b.q.Take())
 }
